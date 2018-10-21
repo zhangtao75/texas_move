@@ -8,18 +8,19 @@ class TexasStrategy():
         self.debug_strd_num = 2 # debug
         
         config = configparser.ConfigParser()
-        config.read('analysePioRes.ini')
+        config.read('texas_move.ini', encoding='utf-8')
         self.strategy_files_root = config['GENERAL']['Pio_Res_Path']
         self.possible_action_path = config['GENERAL']['Possible_Action_Path']
         self.action_list_length = 4 # same setting as GUI
         self.current_strd = 0
         self.current_user_name = ''
         self.possible_actions = {}
+        self.hidden_action_list = config['GENERAL']['Hidden_Action_List'].split(',')
 
         # create pairs
         cards = []
-        for value in ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']:
-            for suit in [chr(9824), chr(9829), chr(9830), chr(9827)]:
+        for value in config['GENERAL']['Rank_List'].split(','):
+            for suit in config['GENERAL']['Suit_List'].split(','):
                 cards.append([suit, value])
         self.pairs = []
         for card1 in cards[1:]:
@@ -46,13 +47,12 @@ class TexasStrategy():
         return self.possible_actions[player_name]
         
     def get_advice_file_name(self, user_name, action_list):
-        hidden_action_list = ['SB', 'BB', '2BB', 'Fold']
         file_name = ''
         for action_turn in range(self.action_list_length):
             for player_with_action in action_list:
                 for player_name in player_with_action:
                     if len(player_with_action[player_name]) > action_turn:
-                        if player_with_action[player_name][action_turn] not in hidden_action_list:
+                        if player_with_action[player_name][action_turn] not in self.hidden_action_list:
                             file_name += player_name + '_' + player_with_action[player_name][action_turn] + '_'
         file_name += user_name + '_strategy.txt'
         return file_name

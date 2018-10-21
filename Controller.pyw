@@ -50,7 +50,7 @@ class Controller():
         # if (auto_process == False) and \
         #     (view.player_group.get_current_player_previous_action() == 'Fold'):
         if view.player_group.get_current_player_previous_action() == 'Fold':
-            self.act_event_process(view, 0)
+            self.act_event_process(view, 0)     # 0: Fold
         
     def set_current_event_process(self, view):
         self.set_act(view)

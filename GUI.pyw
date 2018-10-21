@@ -1,34 +1,38 @@
 import tkinter as tk
 from tkinter import messagebox
-
-#card_suit_list = ('空', '黑', '红', '片', '梅')
-#card_value_list = ('空', 'A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2')
+import configparser
 
 class GUI_PLAYER:
-    def __init__(self, frm_father, player_position, gui_row, gui_column, 
-        var_user_pos, int_user_pos, var_current_pos, int_current_pos,
-        set_current_event_process_pg):
-        # 
-        self.set_current_event_process_pg = set_current_event_process_pg
-        # GUI part
-        _frm_player = tk.Frame(frm_father, bd=2, relief=tk.GROOVE)
-        _frm_player.grid(row=gui_row, column=gui_column, padx=5, pady=5)
+    def __init__(self, ini_parser, frm_father, player_position, 
+        gui_row, gui_column,            # the player's position in the GUI
+        var_user_pos, int_user_pos,     # the control var of user position & 
+                                        # the value for this player
+        var_current_pos, int_current_pos,   # the control var of current player &
+                                            # the value for this player
+        set_current_event_process_pg):  # the event: click the current radio btn
 
-        self.rdb_user_pos = tk.Radiobutton(_frm_player, 
+        self.set_current_event_process_pg = set_current_event_process_pg
+        
+        # GUI part
+        # the main frame
+        frm_player = tk.Frame(frm_father, bd=2, relief=tk.GROOVE)
+        frm_player.grid(row=gui_row, column=gui_column, padx=5, pady=5)
+        # the user position
+        self.rdb_user_pos = tk.Radiobutton(frm_player, 
             variable=var_user_pos, value=int_user_pos)
         self.rdb_user_pos.grid(row=0, column=0, padx=5)
-        
-        _lbl_player = tk.Label(_frm_player, text=player_position)
-        _lbl_player.grid(row=0, column=1, padx=5)
-        
-        self.rdb_current_pos = tk.Radiobutton(_frm_player, 
+        # the user name label
+        lbl_player = tk.Label(frm_player, text=player_position)
+        lbl_player.grid(row=0, column=1, padx=5)
+        # the current player 
+        self.rdb_current_pos = tk.Radiobutton(frm_player, 
             variable=var_current_pos, value=int_current_pos)
         self.rdb_current_pos.grid(row=0, column=2, padx=5)
         self.rdb_current_pos.config(command=self.current_pos_click)
 
         # action list
         # import constants definition
-        self.action_list_length = 4
+        self.action_list_length = int(ini_parser['GUI_PLAYER']['Action_List_Len'])
         action_label_width = 10
         action_label_bd = 2
         action_label_style = tk.GROOVE
@@ -36,17 +40,17 @@ class GUI_PLAYER:
         action_label_padx = 5
         
         self.action_list = []       # display control variable list
-        self.action_label_list = []  # label widget list (maybe convert this list to a _local one)
+        action_label_list = []      # label widget list 
 
         for action_idx in range(self.action_list_length):
             self.action_list.append(tk.StringVar())
             self.action_list[action_idx].set('')
             self.action_list[action_idx].set(str(action_idx))   #debug
-            self.action_label_list.append(
-                tk.Label(_frm_player, textvariable=self.action_list[action_idx], 
+            action_label_list.append(
+                tk.Label(frm_player, textvariable=self.action_list[action_idx], 
                     width=action_label_width, bd=action_label_bd, 
                     relief=action_label_style))
-            self.action_label_list[action_idx].grid(row=action_idx+1, column=0, 
+            action_label_list[action_idx].grid(row=action_idx+1, column=0, 
                 columnspan=action_label_columnspan, padx=action_label_padx)
 
     def current_pos_click(self):
@@ -100,23 +104,25 @@ class GUI_PLAYER:
                 return previous_action
         return previous_action
 
+
 class GUI_PLAYER_GROUP:
-    def __init__(self, frm_father, set_current_event_process_gui):
+    def __init__(self, ini_parser, frm_father, set_current_event_process_gui):
         self.var_user_pos = tk.IntVar()
         self.var_current_pos = tk.IntVar()
         self.latest_next_pos = 0
         self.set_current_event_process_gui = set_current_event_process_gui
 
-        # player_idx: 0:SB, 1:BB, 2:UTG, 3:UTG+1, 4:UTG+2, 5:HJ, 6:CO, 7:BTN
+        # player_idx: 0:SB, 1:BB, 2:STR, 3:UTG, 4:UTG+1, 5:HJ, 6:CO, 7:BTN
         # var_idx = player_idx + 1 
         self.player_group = []
-        self.player_name = ['SB', 'BB', 'UTG', 'UTG+1', 'UTG+2', 'HJ', 'CO', 'BTN']
-        player_row_col = [[0,3], [1,4], [2,3], [2,2], [2,1], [1,0], [0,1], [0,2]] 
+        self.player_name = ini_parser['GENERAL']['Players'].split(',')
+        # player_position - each player uses its index to find its position
+        player_position =  ini_parser['GUI_PLAYER_GROUP']['Player_Position'].split(';')
         for player_idx in range(8):
-            self.player_group.append(GUI_PLAYER(frm_father, 
+            self.player_group.append(GUI_PLAYER(ini_parser, frm_father, 
                 self.player_name[player_idx], 
-                gui_row=player_row_col[player_idx][0], 
-                gui_column=player_row_col[player_idx][1], 
+                gui_row=int(player_position[player_idx].split(',')[0]), 
+                gui_column=int(player_position[player_idx].split(',')[1]), 
                 var_user_pos=self.var_user_pos, int_user_pos=player_idx+1,
                 var_current_pos=self.var_current_pos, int_current_pos=player_idx+1, 
                 set_current_event_process_pg=self.set_current_event_process_pg))
@@ -164,8 +170,8 @@ class GUI_PLAYER_GROUP:
         self.player_group[0].set_action('SB', True)
         self.player_group[1].set_action('BB', True)
         self.player_group[2].set_action('2BB', True)
-        self.var_current_pos.set(4)     # UTG+1
-        self.latest_next_pos = 4        # UTG+1
+        self.var_current_pos.set(4)     # STR
+        self.latest_next_pos = 4        # STR
         for player in self.player_group:
             player.disable_user_pos()
             player.enable_current_pos()
@@ -209,51 +215,52 @@ class GUI_PLAYER_GROUP:
 
 
 class GUI_STRD:
-    def __init__(self, frm_father, gui_row, gui_column):
+    def __init__(self, ini_parser, frm_father, gui_row, gui_column):
         # create the form
-        _frm_strd = tk.Frame(frm_father)
-        _frm_strd.grid(row=gui_row, column=gui_column, padx=5, pady=5)
+        frm_strd = tk.Frame(frm_father)
+        frm_strd.grid(row=gui_row, column=gui_column, padx=5, pady=5)
         # create radiobox buttons
-        self.var_strad_limit = tk.IntVar()
-        self.rdb_strd_limit_50 = tk.Radiobutton(_frm_strd, text='50 strad', 
-            variable=self.var_strad_limit, value=50)
-        self.rdb_strd_limit_50.grid(row=0, column=0, padx=5)
-        self.rdb_strd_limit_100 = tk.Radiobutton(_frm_strd, text='100 strad', 
-            variable=self.var_strad_limit, value=100)
-        self.rdb_strd_limit_100.grid(row=1, column=0, padx=5)
-        self.rdb_strd_limit_200 = tk.Radiobutton(_frm_strd, text='200 strad', 
-            variable=self.var_strad_limit, value=200)
-        self.rdb_strd_limit_200.grid(row=2, column=0, padx=5)
+        self.var_strd_limit = tk.IntVar()
+        self.strd_disp_list = []
+        self.strd_type_num = int(ini_parser['GUI_STRD']['Strd_Type_Num'])
+        for strd_idx in range(self.strd_type_num):
+            self.strd_disp_list.append(
+                tk.Radiobutton(frm_strd, 
+                    text=ini_parser['GUI_STRD']['Strd_limit_'+str(strd_idx)]+' strd', 
+                    variable=self.var_strd_limit, 
+                    value=int(ini_parser['GUI_STRD']['Strd_limit_'+str(strd_idx)])))
+            self.strd_disp_list[strd_idx].grid(row=strd_idx, column=0, padx=5)
         # default straddle value
-        self.default_strad_limit = 50
-        self.var_strad_limit.set(self.default_strad_limit)
+        # why self: default value may be used in other methods
+        self.default_strd_limit = 50
+        self.var_strd_limit.set(self.default_strd_limit)
         # set to the open_state
         self.set_open_state()
 
     def set_open_state(self):
-        #self.var_strad_limit.set(self.default_strad_limit)
-        self.rdb_strd_limit_50.config(state=tk.NORMAL)
-        self.rdb_strd_limit_100.config(state=tk.NORMAL)
-        self.rdb_strd_limit_200.config(state=tk.NORMAL)
+        #self.var_strd_limit.set(self.default_strd_limit)
+        for strd_idx in range(self.strd_type_num):
+            self.strd_disp_list[strd_idx].config(state=tk.NORMAL)
 
     def get_strd_limit(self):
-        return self.var_strad_limit.get()
+        return self.var_strd_limit.get()
 
     def set_running_state(self):
-        self.rdb_strd_limit_50.config(state=tk.DISABLED)
-        self.rdb_strd_limit_100.config(state=tk.DISABLED)
-        self.rdb_strd_limit_200.config(state=tk.DISABLED)
+        for strd_idx in range(self.strd_type_num):
+            self.strd_disp_list[strd_idx].config(state=tk.DISABLED)
 
 
 class GUI_HOLE_CARDS:
-    def __init__(self, frm_father, gui_row, gui_column):
+    def __init__(self, ini_parser, frm_father, gui_row, gui_column):
         # constants for hole cards
-        self.hole_card_num = 2
+        self.hole_card_num = int(ini_parser['GUI_HOLE_CARDS']['Hole_Card_Num'])
         self.hole_card_disp_width = 10
         # the suit order below is 黑, 红, 片, 梅
-        self.card_suit_list = [chr(9824), chr(9829), chr(9830), chr(9827)]
-        self.card_suit_red_list = [chr(9829), chr(9830)]
-        self.card_rank_list = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2']
+        self.card_suit_list = ini_parser['GUI_HOLE_CARDS']['Suit_List'].split(',')
+        self.card_suit_red_list = ini_parser['GUI_HOLE_CARDS']['Suit_Red_List'].split(',')
+        self.card_rank_list = ini_parser['GUI_HOLE_CARDS']['Rank_List'].split(',')
+        # icon for the selection dialog
+        self.icon = ini_parser['GUI_HOLE_CARDS']['Icon']
         # number of selected hole cards
         self.selected_hole_card_num = 0
         # this list contains hole cards
@@ -262,32 +269,29 @@ class GUI_HOLE_CARDS:
         self.hole_card_disp_list = []
         
         # create the form
-        _frm_hole_card = tk.Frame(frm_father)
-        _frm_hole_card.grid(row=gui_row, column=gui_column, padx=5, pady=5)
+        frm_hole_card = tk.Frame(frm_father)
+        frm_hole_card.grid(row=gui_row, column=gui_column, padx=5, pady=5)
         # create labels to display hole cards
         for hc_idx in range(self.hole_card_num):
             self.hole_card_list.append(tk.StringVar())
             self.hole_card_list[hc_idx].set('')
             self.hole_card_list[hc_idx].set(str(hc_idx+1))   #debug
             self.hole_card_disp_list.append(
-                tk.Label(_frm_hole_card, textvariable=self.hole_card_list[hc_idx], 
+                tk.Label(frm_hole_card, textvariable=self.hole_card_list[hc_idx], 
                     width=self.hole_card_disp_width))
             self.hole_card_disp_list[hc_idx].grid(row=hc_idx, column=0, pady=2)
         # button
-        self.btn_hc = tk.Button(_frm_hole_card, text='set', width=9)
+        self.btn_hc = tk.Button(frm_hole_card, text='set', width=9)
         self.btn_hc.grid(row=2, column=0, padx=5, pady=5)
         self.btn_hc.bind('<Button-1>', self.select_hole_cards)
         # set to the open_state
         self.set_open_state()
         
-    def set_hc(self, hc1):
-        print(hc1)
-
     def select_hole_cards(self, event):
         # create hole cards dialog 
         self.hc_dialog = tk.Toplevel()
         self.hc_dialog.title("Hole cards")
-        self.hc_dialog.iconbitmap('texas.ico')
+        self.hc_dialog.iconbitmap(self.icon)
         self.hc_dialog.geometry("450x130+%d+%d" % (event.x_root, event.y_root))
         # reset 
         self.clear_hole_cards()
@@ -305,7 +309,7 @@ class GUI_HOLE_CARDS:
                 def hole_card_button_click(hc_button_clicked=hc_idx):
                     self.hole_card_select_event_process(hc_button_clicked)
                 self.hc_button_list[hc_idx].config(command=hole_card_button_click)
-                if suit_idx in (1, 2):
+                if suit in self.card_suit_red_list:
                     self.hc_button_list[hc_idx].config(fg='red')
                 self.hc_button_list[hc_idx].grid(row=suit_idx, column=rank_idx,
                     padx=2, pady=2)
@@ -352,14 +356,14 @@ class GUI_START:
     def __init__(self, frm_father, gui_row, gui_column, 
         open_event_process, run_event_process):
         # create the form
-        _frm_start = tk.Frame(frm_father)
-        _frm_start.grid(row=gui_row, column=gui_column, padx=5, pady=5)
+        frm_start = tk.Frame(frm_father)
+        frm_start.grid(row=gui_row, column=gui_column, padx=5, pady=5)
         # create buttons
-        self.btn_start = tk.Button(_frm_start, text='New Game', width=9)
+        self.btn_start = tk.Button(frm_start, text='New Game', width=9)
         self.btn_start.grid(row=0, column=0, padx=5, pady=5)
         self.btn_start.config(command=open_event_process)
 
-        self.btn_confirm = tk.Button(_frm_start, text='Confirm', width=9)
+        self.btn_confirm = tk.Button(frm_start, text='Confirm', width=9)
         self.btn_confirm.grid(row=1, column=0, padx=5, pady=5)
         self.btn_confirm.config(command=run_event_process)
         self.btn_confirm.config(state=tk.DISABLED)
@@ -374,8 +378,8 @@ class GUI_START:
 class GUI_ACTIONS:
     def __init__(self, frm_father, gui_row, gui_column, act_event_process):
         # the actions form
-        _frm_actions = tk.Frame(frm_father)
-        _frm_actions.grid(row=gui_row, column=gui_column, columnspan=3,
+        frm_actions = tk.Frame(frm_father)
+        frm_actions.grid(row=gui_row, column=gui_column, columnspan=3,
             padx=5, pady=5)
 
         # constants of actions
@@ -396,7 +400,7 @@ class GUI_ACTIONS:
                 self.action_list[action_idx].set('')
                 self.action_list[action_idx].set(str(action_idx))   #debug
                 self.action_button_list.append(
-                    tk.Button(_frm_actions, 
+                    tk.Button(frm_actions, 
                         textvariable=self.action_list[action_idx], 
                         width=action_button_width))
                 self.action_button_list[action_idx].grid(row=row, column=column, 
@@ -418,14 +422,14 @@ class GUI_ACTIONS:
 
 
 class GUI_ADVICE:
-    def __init__(self, frm_father, gui_row, gui_column):
+    def __init__(self, ini_parser, frm_father, gui_row, gui_column):
         # the advice form
-        _frm_advice = tk.Frame(frm_father)
-        _frm_advice.grid(row=gui_row, column=gui_column, pady=5)
+        frm_advice = tk.Frame(frm_father)
+        frm_advice.grid(row=gui_row, column=gui_column, pady=5)
 
         # constants of advice
         advice_disp_width = 15
-        self.advice_list_length = 4
+        self.advice_list_length = int(ini_parser['GUI_ADVICE']['Adice_List_Len'])
         self.advice_list = []       # display control variable list
         self.advice_disp_list = []  # label widget list (maybe convert this list to a _local one)
 
@@ -435,15 +439,16 @@ class GUI_ADVICE:
             self.advice_list[advice_idx].set('')
             self.advice_list[advice_idx].set(str(advice_idx+1))   #debug
             self.advice_disp_list.append(
-                tk.Label(_frm_advice, textvariable=self.advice_list[advice_idx], 
+                tk.Label(frm_advice, textvariable=self.advice_list[advice_idx], 
                     width=advice_disp_width))
             self.advice_disp_list[advice_idx].grid(row=advice_idx, column=0, 
                 pady=2)
 
     def set_advice(self, advices):
         for advice_idx, advice in enumerate(advices):
-            if advice_idx > 3:
-                messagebox.showinfo("advice error", "more than 4 advices")
+            if advice_idx >= self.advice_list_length:
+                messagebox.showinfo("advice error", "more advices than expectation")
+                return
             self.advice_list[advice_idx].set(advice)
 
 
@@ -452,23 +457,29 @@ class GUI:
         # register the controller
         if main_controller is None:
             exit(-1)
-        self._controller = main_controller
+        self.controller = main_controller
         
+        # create the ini parser
+        config = configparser.ConfigParser()
+        config.read('texas_move.ini', encoding='utf-8')
+
         # main window
-        _win_root = tk.Tk()
-        _win_root.title("Texas Hold'em")
-        _win_root.iconbitmap('texas.ico')
-        self.frm_root = tk.Frame(_win_root, width=800+15*2, height=450+100)
+        win_root = tk.Tk()
+        win_root.title("Texas Hold'em")
+        win_root.iconbitmap('texas.ico')
+        self.frm_root = tk.Frame(win_root, width=800+15*2, height=450+100)
         self.frm_root.grid_propagate(0)
         self.frm_root.grid(padx=15, pady=15)
 
-        self.strd = GUI_STRD(self.frm_root, 0, 0)
-        self.player_group = GUI_PLAYER_GROUP(self.frm_root, self.set_current_event_process_gui)
-        self.hole_cards = GUI_HOLE_CARDS(self.frm_root, 0, 4)
+        # components (keep self. to make test easy)
+        self.strd = GUI_STRD(config, self.frm_root, 0, 0)
+        self.player_group = GUI_PLAYER_GROUP(config, self.frm_root, 
+            self.set_current_event_process_gui)
+        self.hole_cards = GUI_HOLE_CARDS(config, self.frm_root, 0, 4)
         self.actions = GUI_ACTIONS(self.frm_root, 1, 1, self.act_event_process)
         self.start = GUI_START(self.frm_root, 2, 0, 
             self.open_event_process, self.run_event_process)
-        self.advice = GUI_ADVICE(self.frm_root, 2, 4)
+        self.advice = GUI_ADVICE(config, self.frm_root, 2, 4)
 
         # test buttons
         # _frm_test = tk.Frame(self.frm_root)
@@ -554,16 +565,16 @@ class GUI:
         messagebox.showinfo("Warning", msg)
 
     def open_event_process(self):
-        self._controller.open_event_process(self)
+        self.controller.open_event_process(self)
 
     def run_event_process(self):
-        self._controller.run_event_process(self)
+        self.controller.run_event_process(self)
 
     def act_event_process(self, act_num):
-        self._controller.act_event_process(self, act_num)
+        self.controller.act_event_process(self, act_num)
 
     def set_current_event_process_gui(self):
-        self._controller.set_current_event_process(self)
+        self.controller.set_current_event_process(self)
 
     def mainloop(self):
         """start the GUI"""
